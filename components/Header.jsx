@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { SignedIn } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import { ArrowLeft, CarFront, Heart, Layout } from "lucide-react";
 
@@ -26,7 +26,10 @@ const Header = async ({ isAdminPage = false }) => {
         <div className="flex items-center gap-4">
           {isAdminPage ? (
             <Link href="/">
-              <Button className="cursor-pointer flex items-center gap-2" variant="outline">
+              <Button
+                className="cursor-pointer flex items-center gap-2"
+                variant="outline"
+              >
                 <ArrowLeft size={18} />
                 <span>Go to Homepage</span>
               </Button>
@@ -56,6 +59,27 @@ const Header = async ({ isAdminPage = false }) => {
               )}
             </SignedIn>
           )}
+
+          {/* show the login button if user is signed out */}
+          <SignedOut>
+            <SignInButton forceRedirectUrl="/">
+              <Button variant="outline" className="cursor-pointer">
+                Login
+              </Button>
+            </SignInButton>
+          </SignedOut>
+
+          {/* // show the user avatar from clerk if the use is signed in */}
+          <SignedIn>
+            <UserButton
+              className="cursor-pointer"
+              appearance={{
+                elements: {
+                  avatarBox: "w-20 h-20",
+                },
+              }}
+            />
+          </SignedIn>
         </div>
       </nav>
     </header>
