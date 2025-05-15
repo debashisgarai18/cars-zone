@@ -53,7 +53,7 @@ function Waitlist() {
   };
 
   return (
-    <div className="h-fit bg-[#0D111D] flex flex-col relative overflow-hidden">
+    <div className="h-fit dotted-background flex flex-col relative overflow-hidden">
       {backgroundImage && (
         <div
           className="absolute inset-0 z-0 opacity-40"
@@ -80,7 +80,7 @@ function Waitlist() {
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 md:px-10 py-24 relative z-10">
         <div className="max-w-3xl mx-auto w-full">
-          <div className="p-8 md:p-12 bg-[#171B26] rounded-lg">
+          <div className="p-8 md:p-12 bg-[#0d0f13] rounded-lg">
             <h1 className="text-4xl md:text-5xl lg:text-6xl text-[#EFEFED] font-poppins mb-8">
               The future of car buying is <span className="font-semibold md:font-extrabold">coming soon</span>.
             </h1>
@@ -135,7 +135,7 @@ function Waitlist() {
             )}
           </div>
 
-          <div className="mt-12 bg-[#171B26] rounded-lg p-8">
+          <div className="mt-12 bg-[#0d0f13] rounded-lg p-8">
             <h2 className="text-xl font-poppins text-[#EFEFED] mb-8">
               Frequently Asked Questions
             </h2>
