@@ -1,7 +1,13 @@
 import { CarCard } from "@/components/car-card";
 import { HomeSearch } from "@/components/home-search";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { bodyTypes, carMakes, featuredCars } from "@/lib/dummyData";
+import { bodyTypes, carMakes, faqItems, featuredCars } from "@/lib/dummyData";
 import { Calendar, Car, ChevronRight, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -150,11 +156,30 @@ const HeroSection = () => {
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent rounded-lg flex items-end">
-                  <h3 className="font-bold text-white text-xl pl-4 pb-2">{type.name}</h3>
+                  <h3 className="font-bold text-white text-xl pl-4 pb-2">
+                    {type.name}
+                  </h3>
                 </div>
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+      <section className="py-12 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-2xl font-bold text-center mb-8">
+            Frequently Asked Questions (FAQs)
+          </h2>
+          <Accordion type="single" collapsible className="w-full">
+            {faqItems.map((faq, index) => {
+              return (
+                <AccordionItem key={index} value={`item-${index}`}>
+                  <AccordionTrigger>{faq.question}</AccordionTrigger>
+                  <AccordionContent>{faq.answer}</AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
         </div>
       </section>
     </div>
