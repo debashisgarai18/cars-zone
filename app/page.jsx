@@ -1,8 +1,8 @@
 import { CarCard } from "@/components/car-card";
 import { HomeSearch } from "@/components/home-search";
 import { Button } from "@/components/ui/button";
-import { carMakes, featuredCars } from "@/lib/dummyData";
-import { Car, ChevronRight } from "lucide-react";
+import { bodyTypes, carMakes, featuredCars } from "@/lib/dummyData";
+import { Calendar, Car, ChevronRight, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -81,6 +81,7 @@ const HeroSection = () => {
           </div>
         </div>
       </section>
+      {/* //todo: change the contents and title for these 3  */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-12">
@@ -101,7 +102,7 @@ const HeroSection = () => {
             {/* // todo : change the sentences/points */}
             <div className="text-center">
               <div className="bg-blue-100 text-blue-700 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Car className="h-8 w-8" />
+                <Calendar className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-bold mb-2">Wide Selection</h3>
               <p className="text-gray-600">
@@ -111,7 +112,7 @@ const HeroSection = () => {
             </div>
             <div className="text-center">
               <div className="bg-blue-100 text-blue-700 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Car className="h-8 w-8" />
+                <Shield className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-bold mb-2">Ultra Wide Selection</h3>
               <p className="text-gray-600">
@@ -119,6 +120,40 @@ const HeroSection = () => {
                 sellers
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+      <section className="py-12 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-bold ">Browse by Body Type</h2>
+            <Button variant="ghost" className="flex items-center" asChild>
+              <Link href="/cars">
+                View All
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {bodyTypes.map((type) => (
+              <Link
+                key={type.name}
+                href={`/cars?bodyType=${type.name}`}
+                className="relative group cursor-pointer"
+              >
+                <div className="overflow-hidden rounded-lg flex justify-end h-28 mb-4 relative">
+                  <Image
+                    src={type.image}
+                    alt={type.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition duration-300"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent rounded-lg flex items-end">
+                  <h3 className="font-bold text-white text-xl pl-4 pb-2">{type.name}</h3>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
