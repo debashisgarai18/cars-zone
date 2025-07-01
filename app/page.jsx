@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { bodyTypes, carMakes, faqItems, featuredCars } from "@/lib/dummyData";
+import { SignedOut } from "@clerk/nextjs";
 import { Calendar, Car, ChevronRight, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -180,6 +181,25 @@ const HeroSection = () => {
               );
             })}
           </Accordion>
+        </div>
+      </section>
+      <section className="dotted-background text-white py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-4">Ready to drive in?</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto text-blue-100">
+            Join with thousands of customers who found their perfect dream car
+            through the platform
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Button size="lg" variant="secondary" asChild>
+              <Link href="/cars">View All Cars</Link>
+            </Button>
+            <SignedOut>
+              <Button size="lg" asChild>
+                <Link href="/sign-up">Sign Up Now</Link>
+              </Button>
+            </SignedOut>
+          </div>
         </div>
       </section>
     </div>
