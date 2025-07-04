@@ -6,6 +6,7 @@ import { Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const HomeSearch = () => {
   const [searchText, setSearchText] = useState("");
@@ -14,8 +15,25 @@ export const HomeSearch = () => {
   const [searchImage, setSearchImage] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleFormSubmit = () => {};
-  const handleImageSearch = () => {};
+  const router = useRouter();
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!searchText) {
+      toast.error("Please enter the text to search!!!");
+      return;
+    }
+    router.push(`/cars?search=${encodeURIComponent(searchText)}`);
+  };
+  
+  const handleImageSearch = async (e) => {
+    e.preventDefault();
+    if (!searchImage) {
+      toast.error("Please upload an image for searching!!!");
+      return;
+    }
+    // AI image generation logic
+  };
 
   // use of react-dropzone
   const onDrop = (acceptedFiles) => {
@@ -84,15 +102,14 @@ export const HomeSearch = () => {
       {isImgSearchActive && (
         <div className="mt-4">
           <form onSubmit={handleImageSearch}>
-            <div>
+            <div className="border-2 border-dashed border-gray-300 rounded-3xl p-6 text-center">
               {imagePreview ? (
-                <div>
+                <div className="flex flex-col items-center">
                   <img
                     src={imagePreview}
                     alt="Car Preview"
                     className="h-40 object-contain mb-4"
                   />
-                  {/* // this is for images removal */}
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -109,7 +126,7 @@ export const HomeSearch = () => {
                   <input {...getInputProps()} />
                   <div className="flex flex-col items-center">
                     <Upload className="h-12 w-12 text-gray-400 mb-2" />
-                    <p className="text-white">
+                    <p className="text-gray-500 mb-2">
                       {isDragActive && !isDragReject
                         ? "Leave the files here to upload"
                         : "Drag and Drop a car image or click to select"}
@@ -124,6 +141,11 @@ export const HomeSearch = () => {
                 </div>
               )}
             </div>
+            {imagePreview && (
+              <Button className="w-full" type="submit" disabled={isUploading}>
+                {isUploading ? "Uploading..." : "Search with this Image"}
+              </Button>
+            )}
           </form>
         </div>
       )}
