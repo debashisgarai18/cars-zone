@@ -92,7 +92,7 @@ export const HomeSearch = () => {
                     alt="Car Preview"
                     className="h-40 object-contain mb-4"
                   />
-                  {/* // this is for image removal */}
+                  {/* // this is for images removal */}
                   <Button
                     variant="outline"
                     onClick={() => {
