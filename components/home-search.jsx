@@ -25,7 +25,7 @@ export const HomeSearch = () => {
     }
     router.push(`/cars?search=${encodeURIComponent(searchText)}`);
   };
-  
+
   const handleImageSearch = async (e) => {
     e.preventDefault();
     if (!searchImage) {
@@ -142,7 +142,11 @@ export const HomeSearch = () => {
               )}
             </div>
             {imagePreview && (
-              <Button className="w-full" type="submit" disabled={isUploading}>
+              <Button
+                className="w-full mt-2"
+                type="submit"
+                disabled={isUploading}
+              >
                 {isUploading ? "Uploading..." : "Search with this Image"}
               </Button>
             )}
