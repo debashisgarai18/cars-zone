@@ -4,7 +4,7 @@
 
 ## Tech Stack:
 - NextJS
-- Prisma
+- Prisma ORM
 - Postgres
 - Tailwind
 - Clerk
