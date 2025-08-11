@@ -1,5 +1,3 @@
-"use server";
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 //* Function to convert a file to base64
