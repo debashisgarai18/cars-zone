@@ -52,7 +52,24 @@ export default function Sidebar() {
         })}
       </div>
       {/* for mobile */}
-      <div></div>
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t flex justify-around items-center h-16">
+        {routes.map((elem) => {
+          return (
+            <Link
+              key={elem.href}
+              href={elem.href}
+              className={cn(
+                "flex flex-col items-center justify-center text-slate-500 text-xs font-medium transition-all py-1 flex-1",
+                pathName === elem.href &&
+                  "text-blue-700"
+              )}
+            >
+              <elem.icon className="h-5 w-5" />
+              {elem.label}
+            </Link>
+          );
+        })}
+      </div>
     </>
   );
 }
