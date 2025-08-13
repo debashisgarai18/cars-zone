@@ -51,7 +51,7 @@ export const HomeSearch = () => {
       fileReader.onloadend = () => {
         setImagePreview(fileReader.result);
         setIsUploading(false);
-        toast.success("Image uploaded successfulyy");
+        toast.success("Image uploaded successfully");
       };
 
       fileReader.onerror = () => {

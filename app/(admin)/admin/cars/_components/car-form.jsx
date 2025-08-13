@@ -24,6 +24,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useDropzone } from "react-dropzone";
+import { toast } from "sonner";
+import { Upload } from "lucide-react";
 
 const fuelTypes = ["Petrol", "Diesel", "Electric", "Hybrid", "Plug-in Hybrid"];
 const transmissions = ["Automatic", "Manual", "Semi-automatic"];
@@ -40,6 +43,8 @@ const carStatus = ["AVAILABLE", "UNAVAILABLE", "SOLD"];
 
 export default function CarForm() {
   const [activeTab, setActiveTab] = useState("manual");
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [imageError, setImageError] = useState("");
 
   const carFormSchema = z.object({
     make: z.string().min(1, "Make is required"),
@@ -90,7 +95,51 @@ export default function CarForm() {
     },
   });
 
-  const onSubmit = async () => {};
+  const onSubmit = async () => {
+    if (uploadedImages.length === 0) {
+      setImageError("Please upload atleast one image");
+      return;
+    }
+  };
+
+  //* use of react-dropzone
+  const onMultiImagesDrop = (acceptedFiles) => {
+    const validFiles = acceptedFiles.filter((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} exceeds 5MB size limit and will be skipped`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    const newImages = [];
+    validFiles.forEach((file) => {
+      // use of file reader
+      const fileReader = new FileReader();
+      fileReader.onload = (e) => {
+        newImages.push(e.target.result);
+        if (newImages.length === validFiles.length) {
+          setUploadedImages((prev) => [...prev, ...newImages]);
+          setImageError("");
+          toast.success(`Successfully uploaded ${validFiles.length} images`);
+        }
+      };
+      fileReader.readAsDataURL(file);
+    });
+  };
+
+  const {
+    getRootProps: getMultiImageRootProps,
+    getInputProps: getMultiImageInputProps,
+  } = useDropzone({
+    onDrop: onMultiImagesDrop,
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png", ".webp"],
+    },
+    multiple: true,
+  });
 
   return (
     <div>
@@ -334,7 +383,7 @@ export default function CarForm() {
                       </p>
                     )}
                   </div>
-                  <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 col-span-full">
                     <Checkbox
                       id="featured"
                       checked={watch("featured")}
@@ -348,6 +397,35 @@ export default function CarForm() {
                         Featured cars appears on the homepage
                       </p>
                     </div>
+                  </div>
+                  <div className="col-span-full">
+                    <Label
+                      htmlFor="images"
+                      className={imageError && "border-red-500"}
+                    >
+                      Images
+                      {imageError && <span className="text-red-500">*</span>}
+                    </Label>
+                    <div
+                      {...getMultiImageRootProps()}
+                      className={`border-2 border-dashed rounded-lg text-center cursor-pointer mt-2 p-4 hover:bg-gray-50 transition ${
+                        imageError ? "border-red-500" : "border-gray-300"
+                      }`}
+                    >
+                      <input {...getMultiImageInputProps()} />
+                      <div className="flex flex-col items-center justify-center">
+                        <Upload className="h-12 w-12 text-gray-400 mb-3" />
+                        <p className="text-gray-600 text-sm">
+                          Drag/Drop or Click to upload multiple images
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Supports : JPG, PNG, JPEG, WEBP (max 5MB)
+                        </p>
+                      </div>
+                    </div>
+                    {imageError && (
+                      <p className="text-xs text-red-500 mt-1">{imageError}</p>
+                    )}
                   </div>
                 </div>
               </form>
