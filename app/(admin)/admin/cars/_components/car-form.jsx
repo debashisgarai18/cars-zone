@@ -113,7 +113,7 @@ export default function CarForm() {
       toast.success("Car added successfully");
       router.push("/admin/cars");
     }
-  }, [addCarResult]);
+  }, [addCarResult, addCarLoading]);
 
   const onSubmit = async (data) => {
     if (uploadedImages.length === 0) {
