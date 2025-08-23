@@ -20,7 +20,7 @@ export default function CarsList() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <Button
-          className="flex items-center"
+          className="flex items-center cursor-pointer"
           onClick={() => router.push("/admin/cars/create")}
         >
           <Plus className="h-4 w-4" />

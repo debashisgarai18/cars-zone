@@ -1,10 +1,12 @@
+"use server"
+
 import { db } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase";
 import { auth } from "@clerk/nextjs/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { uuid as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 //* Function to convert a file to base64
 const convert2Base64 = async (file) => {

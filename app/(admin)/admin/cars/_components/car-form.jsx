@@ -26,7 +26,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
+import useFetch from "@/hooks/use-fetch";
+import { addCar } from "@/actions/cars";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 const fuelTypes = ["Petrol", "Diesel", "Electric", "Hybrid", "Plug-in Hybrid"];
 const transmissions = ["Automatic", "Manual", "Semi-automatic"];
@@ -95,11 +99,21 @@ export default function CarForm() {
     },
   });
 
+  const {
+    data: addCarResult,
+    loading: addCarLoading,
+    fn: addCarFunction,
+  } = useFetch(addCar);
+
   const onSubmit = async () => {
     if (uploadedImages.length === 0) {
       setImageError("Please upload atleast one image");
       return;
     }
+  };
+
+  const removeImage = (index) => {
+    setUploadedImages((prev) => prev.filter((_, idx) => idx !== index));
   };
 
   //* use of react-dropzone
@@ -150,8 +164,12 @@ export default function CarForm() {
         onValueChange={setActiveTab}
       >
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="manual">Manual Entry</TabsTrigger>
-          <TabsTrigger value="ai">AI Upload</TabsTrigger>
+          <TabsTrigger value="manual" className="cursor-pointer">
+            Manual Entry
+          </TabsTrigger>
+          <TabsTrigger value="ai" className="cursor-pointer">
+            AI Upload
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="manual" className="mt-6">
           <Card>
@@ -428,6 +446,52 @@ export default function CarForm() {
                     )}
                   </div>
                 </div>
+                {uploadedImages.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium mb-2">
+                      Uploaded Images ({uploadedImages.length})
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                      {uploadedImages.map((image, idx) => {
+                        return (
+                          <div key={idx} className="relative group">
+                            <Image
+                              src={image}
+                              alt={`Car Image ${idx + 1}`}
+                              height={50}
+                              width={50}
+                              className="h-28 w-full object-cover rounded-md"
+                              priority
+                            />
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="destructive"
+                              className="absolute right-1 top-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                              onClick={() => removeImage(idx)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                <Button
+                  type="submit"
+                  className="w-full md:w-auto"
+                  disabled={true}
+                >
+                  {true ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding
+                      Car...
+                    </>
+                  ) : (
+                    "Add Car"
+                  )}
+                </Button>
               </form>
             </CardContent>
           </Card>
