@@ -27,7 +27,7 @@ import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { Camera, Loader2, Upload, X } from "lucide-react";
 import useFetch from "@/hooks/use-fetch";
-import { addCar } from "@/actions/cars";
+import { addCar, processImage } from "@/actions/cars";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -108,6 +108,60 @@ export default function CarForm() {
     loading: addCarLoading,
     fn: addCarFunction,
   } = useFetch(addCar);
+
+  //* fetch the sever action fn
+  const {
+    loading: processImageLoading,
+    fn: processImageFn,
+    data: processImageResult,
+    error: processImageError,
+  } = useFetch(processImage);
+
+  const processWithAI = async () => {
+    if (!uploadedAIImage) {
+      toast.error("Please upload an image first");
+      return;
+    }
+    await processImageFn(uploadedAIImage);
+  };
+
+  useEffect(() => {
+    if (processImageError) {
+      toast.error(processImageError.message || "Failed to upload the car");
+    }
+  }, [processImageError]);
+
+  useEffect(() => {
+    if (processImageResult?.success) {
+      const carDetails = processImageResult?.data;
+
+      setValue("make", carDetails.make);
+      setValue("model", carDetails.model);
+      setValue("year", carDetails.year.toString());
+      setValue("color", carDetails.color);
+      setValue("bodyType", carDetails.bodyType);
+      setValue("fuelType", carDetails.fuelType);
+      setValue("price", carDetails.price);
+      setValue("mileage", carDetails.mileage);
+      setValue("transmission", carDetails.transmission);
+      setValue("description", carDetails.description);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        setUploadedImages((prev) => [...prev, e.target.result]);
+      };
+
+      reader.readAsDataURL(uploadedAIImage);
+
+      toast.success("Successfully extracted car details", {
+        description: `Detected ${carDetails.year} ${carDetails.make} ${
+          carDetails.model
+        } with ${Math.round(carDetails.confidence * 100)}% confidence`,
+      });
+
+      setActiveTab("Manual");
+    }
+  }, [processImageResult, uploadedAIImage]);
 
   useEffect(() => {
     if (addCarResult?.success) {
@@ -569,7 +623,7 @@ export default function CarForm() {
                         alt="Car Preview"
                         className="max-h-56 max-w-full object0contain mb-4"
                       />
-                      <div>
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -579,6 +633,23 @@ export default function CarForm() {
                           }}
                         >
                           Remove
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={processWithAI}
+                          disabled={processImageLoading}
+                        >
+                          {true ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <Camera className="mr-2 h-4 w-4" />
+                              Extracting Details
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -599,6 +670,27 @@ export default function CarForm() {
                       </div>
                     </div>
                   )}
+                </div>
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h3 className="font-medium mb-2">How it works</h3>
+                  <ol className="space-y-2 text-sm text-gray-600 list-decimal pl-4">
+                    <li>Upload a clear image of the car</li>
+                    <li>Click "Extract Details" to analyse with Gemini AI</li>
+                    <li>Review the extracted information</li>
+                    <li>Fill in any missing details manually</li>
+                    <li>Add the car to your invenory</li>
+                  </ol>
+                </div>
+                <div className="bg-amber-50 p-4 rounded-md">
+                  <h3 className="font-medium text-amber-700">
+                    Tips for best results
+                  </h3>
+                  <ul className="space-y-1 text-sm text-amber-700">
+                    <li>▪️Use clear, well-lit images</li>
+                    <li>▪️Try to capture the entire vehicle</li>
+                    <li>▪️For different models, use multiple views</li>
+                    <li>▪️Always verify AI-extracted inforation</li>
+                  </ul>
                 </div>
               </div>
             </CardContent>
