@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -26,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { Loader2, Upload, X } from "lucide-react";
+import { Camera, Loader2, Upload, X } from "lucide-react";
 import useFetch from "@/hooks/use-fetch";
 import { addCar } from "@/actions/cars";
 import { Button } from "@/components/ui/button";
@@ -50,6 +49,8 @@ export default function CarForm() {
   const [activeTab, setActiveTab] = useState("manual");
   const [uploadedImages, setUploadedImages] = useState([]);
   const [imageError, setImageError] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploadedAIImage, setUploadedAIImage] = useState(null);
 
   const carFormSchema = z.object({
     make: z.string().min(1, "Make is required"),
@@ -74,7 +75,7 @@ export default function CarForm() {
     featured: z.boolean().default(false),
   });
 
-  const router = useRouter()
+  const router = useRouter();
 
   const {
     register,
@@ -135,11 +136,42 @@ export default function CarForm() {
     });
   };
 
+  //* fn for Ai image search -> use of drop-zone
+  const onAIImagesDrop = (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+      setUploadedAIImage(file);
+
+      //* use of file reader
+      const render = new FileReader();
+      render.onload = (e) => {
+        setImagePreview(e.target.result);
+        toast.success("Image uploaded successfully");
+      };
+      render.readAsDataURL(file);
+    }
+  };
+
+  //* for AI image search
+  const { getRootProps: getAIRootProps, getInputProps: getAIInputProps } =
+    useDropzone({
+      onDrop: onAIImagesDrop,
+      accept: {
+        "image/*": [".jpeg", ".jpg", ".png", ".webp"],
+      },
+      maxFiles: 1,
+      multiple: false,
+    });
+
   const removeImage = (index) => {
     setUploadedImages((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  //* use of react-dropzone
+  //* use of react-dropzone -> for manual entry
   const onMultiImagesDrop = (acceptedFiles) => {
     const validFiles = acceptedFiles.filter((file) => {
       if (file.size > 5 * 1024 * 1024) {
@@ -167,6 +199,7 @@ export default function CarForm() {
     });
   };
 
+  //* for manual entry
   const {
     getRootProps: getMultiImageRootProps,
     getInputProps: getMultiImageInputProps,
@@ -199,7 +232,6 @@ export default function CarForm() {
             <CardHeader>
               <CardTitle>Car Details</CardTitle>
               <CardDescription>Enter the details of your car</CardDescription>
-              <CardAction>Card Action</CardAction>
             </CardHeader>
             <CardContent>
               <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -520,7 +552,57 @@ export default function CarForm() {
           </Card>
         </TabsContent>
         <TabsContent value="ai" className="mt-6">
-          Change your password here.
+          <Card>
+            <CardHeader>
+              <CardTitle>AI-Powered Car Details Extraction</CardTitle>
+              <CardDescription>
+                Upload the image of a car and let AI extract its details
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                  {imagePreview ? (
+                    <div className="flex flex-col items-center">
+                      <img
+                        src={imagePreview}
+                        alt="Car Preview"
+                        className="max-h-56 max-w-full object0contain mb-4"
+                      />
+                      <div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setImagePreview(null);
+                            setUploadedAIImage(null);
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      {...getAIRootProps()}
+                      className="cursor-pointer hover:bg-gray-50 transition"
+                    >
+                      <input {...getAIInputProps()} />
+                      <div className="flex flex-col items-center justify-center">
+                        <Camera className="h-12 w-12 text-gray-400 mb-2" />
+                        <p className="text-gray-600 text-sm">
+                          "Drag and Drop a car image or click to select"
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Supports : JPG, PNG, JPEG, WEBP (max 5MB)
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
