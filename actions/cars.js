@@ -1,4 +1,4 @@
-"use server"
+"use server";
 
 import { db } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase";
@@ -128,7 +128,8 @@ export async function addCar({ carData, images }) {
     const supabase = createClient(cookieStore);
 
     const imageUrl = [];
-    for (let i = 0; i < imageUrl.length; ++i) {
+    for (let i = 0; i < images.length; ++i) {
+      console.log("Here")
       const base64Data = images[i];
 
       // skip if the data is not of base64 type
@@ -161,11 +162,11 @@ export async function addCar({ carData, images }) {
       }
 
       const publicURL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/car-images-bucket/${filePath}`;
-
       imageUrl.push(publicURL);
     }
 
     if (imageUrl.length === 0) throw new Error("No valid images were uploaded");
+
     const car = await db.car.create({
       data: {
         id: carId,

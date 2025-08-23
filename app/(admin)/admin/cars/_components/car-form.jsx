@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -31,6 +31,7 @@ import useFetch from "@/hooks/use-fetch";
 import { addCar } from "@/actions/cars";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const fuelTypes = ["Petrol", "Diesel", "Electric", "Hybrid", "Plug-in Hybrid"];
 const transmissions = ["Automatic", "Manual", "Semi-automatic"];
@@ -73,6 +74,8 @@ export default function CarForm() {
     featured: z.boolean().default(false),
   });
 
+  const router = useRouter()
+
   const {
     register,
     setValue,
@@ -105,11 +108,31 @@ export default function CarForm() {
     fn: addCarFunction,
   } = useFetch(addCar);
 
-  const onSubmit = async () => {
+  useEffect(() => {
+    if (addCarResult?.success) {
+      toast.success("Car added successfully");
+      router.push("/admin/cars");
+    }
+  }, [addCarResult]);
+
+  const onSubmit = async (data) => {
     if (uploadedImages.length === 0) {
       setImageError("Please upload atleast one image");
       return;
     }
+
+    const carData = {
+      ...data,
+      year: parseInt(data.year),
+      price: parseInt(data.price),
+      mileage: parseInt(data.mileage),
+      seats: data.seats ? parseInt(data.seats) : null,
+    };
+
+    await addCarFunction({
+      carData,
+      images: uploadedImages,
+    });
   };
 
   const removeImage = (index) => {
@@ -481,9 +504,9 @@ export default function CarForm() {
                 <Button
                   type="submit"
                   className="w-full md:w-auto"
-                  disabled={true}
+                  disabled={addCarLoading}
                 >
-                  {true ? (
+                  {addCarLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding
                       Car...
