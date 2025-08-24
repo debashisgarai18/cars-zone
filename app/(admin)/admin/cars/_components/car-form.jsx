@@ -147,7 +147,7 @@ export default function CarForm() {
       setValue("description", carDetails.description);
 
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = (e) => {
         setUploadedImages((prev) => [...prev, e.target.result]);
       };
 
@@ -159,7 +159,7 @@ export default function CarForm() {
         } with ${Math.round(carDetails.confidence * 100)}% confidence`,
       });
 
-      setActiveTab("Manual");
+      setActiveTab("manual");
     }
   }, [processImageResult, uploadedAIImage]);
 
@@ -589,7 +589,7 @@ export default function CarForm() {
                 )}
                 <Button
                   type="submit"
-                  className="w-full md:w-auto"
+                  className="w-full md:w-auto cursor-pointer"
                   disabled={addCarLoading}
                 >
                   {addCarLoading ? (
@@ -631,6 +631,7 @@ export default function CarForm() {
                             setImagePreview(null);
                             setUploadedAIImage(null);
                           }}
+                          className="cursor-pointer"
                         >
                           Remove
                         </Button>
@@ -638,8 +639,9 @@ export default function CarForm() {
                           size="sm"
                           onClick={processWithAI}
                           disabled={processImageLoading}
+                          className="cursor-pointer"
                         >
-                          {true ? (
+                          {processImageLoading ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
                               Processing...
@@ -647,7 +649,7 @@ export default function CarForm() {
                           ) : (
                             <>
                               <Camera className="mr-2 h-4 w-4" />
-                              Extracting Details
+                              Extract Details
                             </>
                           )}
                         </Button>

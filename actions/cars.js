@@ -1,5 +1,6 @@
 "use server";
 
+import { serializedCarData } from "@/lib/helper";
 import { db } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase";
 import { auth } from "@clerk/nextjs/server";
@@ -7,6 +8,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
+import { success } from "zod";
 
 //* Function to convert a file to base64
 const convert2Base64 = async (file) => {
@@ -39,10 +41,10 @@ export async function processImage(file) {
     3. Year (approximately)
     4. Color
     5. Body Type (SUV or Sedan or Hatchback, etc)
-    6. Mileage
+    6. Mileage (approximately, if not sure then use '0' as default)
     7. Fuel Type (your best guess)
     8. Transmission type (your best guess)
-    9. Price (your best guess)
+    9. Price (your best guess in Indian Rupees (INR))
     10. Short description as to be added to a car listing
 
     Format your response as a clean JSON object with these fields:
@@ -52,7 +54,7 @@ export async function processImage(file) {
         "year": 0000,
         "color": "",
         "price": "",
-        "mileage": "",
+        "mileage": ",
         "bodyType": "",
         "fuelType": "",
         "transmission": "",
@@ -129,7 +131,7 @@ export async function addCar({ carData, images }) {
 
     const imageUrl = [];
     for (let i = 0; i < images.length; ++i) {
-      console.log("Here")
+      console.log("Here");
       const base64Data = images[i];
 
       // skip if the data is not of base64 type
@@ -194,5 +196,152 @@ export async function addCar({ carData, images }) {
     };
   } catch (error) {
     throw new Error(`Error adding car: ${error.message}`);
+  }
+}
+
+export async function getCars(search = "") {
+  try {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const user = await db.user.findUnique({
+      where: {
+        clerkUserId: userId,
+      },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    let where = {};
+    if (search) {
+      where.OR = [
+        { make: { contains: search, mode: "insensitive" } },
+        { model: { contains: search, mode: "insensitive" } },
+        { color: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const cars = await db.car.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+    });
+
+    const serializedCars = cars.map(serializedCarData);
+
+    return {
+      success: true,
+      data: serializedCars,
+    };
+  } catch (error) {
+    console.error("Error fetching cars:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+export async function deleteCar(id) {
+  try {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const user = await db.user.findUnique({
+      where: {
+        clerkUserId: userId,
+      },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    const car = await db.car.findUnique({
+      where: { id },
+      select: { images: true },
+    });
+
+    if (!car) {
+      return {
+        success: false,
+        error: "Car not found",
+      };
+    }
+
+    await db.car.delete({
+      where: { id },
+    });
+
+    try {
+      const cookieStore = await cookies();
+      const supabase = createClient(cookieStore);
+
+      const filePaths = car.images
+        .map((imageURL) => {
+          const url = new URL(imageURL);
+          const pathMatch = url.pathname.match(/\/car-images-bucket\/(.*)/);
+          return pathMatch ? pathMatch[1] : null;
+        })
+        .filter(Boolean);
+
+      if (filePaths.length > 0) {
+        const { error } = await supabase.storage
+          .from("car-images-bucket")
+          .remove(filePaths);
+
+        if (error) {
+          console.error("Error deleting images:", error);
+        }
+      }
+    } catch (storageError) {
+      console.error("Error with storage operations:", storageError);
+    }
+
+    revalidatePath("/admin/cars");
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Error deleting car:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+export async function updateCarStatus(id, { status, featured }) {
+  try {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const user = await db.user.findUnique({
+      where: {
+        clerkUserId: userId,
+      },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    const updateData = {};
+
+    if (status !== undefined) updateData.status = status;
+    if (featured !== undefined) updateData.featured = featured;
+
+    await db.car.update({
+      where: { id },
+      data: updateData,
+    });
+
+    revalidatePath("/admin/cars");
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Error updating car:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 }
