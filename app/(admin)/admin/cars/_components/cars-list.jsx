@@ -1,8 +1,17 @@
 "use client";
 
 import { deleteCar, getCars, updateCarStatus } from "@/actions/cars";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -14,10 +23,20 @@ import {
 } from "@/components/ui/table";
 import useFetch from "@/hooks/use-fetch";
 import { formatCurrency } from "@/lib/helper";
-import { Badge, CarIcon, Loader2, Plus, Search } from "lucide-react";
+import {
+  CarIcon,
+  Eye,
+  Loader2,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Star,
+  StarOff,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function CarsList() {
   const [search, setSearch] = useState("");
@@ -52,6 +71,13 @@ export default function CarsList() {
     error: updateError,
   } = useFetch(updateCarStatus);
 
+  useEffect(() => {
+    if (updateResult?.success) {
+      toast.success("Car upadated successfully");
+      fetchCarsFunction(search);
+    }
+  }, [updateResult, search]);
+
   const getStatusBadge = (status) => {
     switch (status) {
       case "AVAILABLE":
@@ -75,6 +101,10 @@ export default function CarsList() {
       default:
         return <Badge variabnt="outline">{status}</Badge>;
     }
+  };
+
+  const handleToggleFeatured = async (car) => {
+    await updateCarStatusFunction(car.id, { featured: !car.featured });
   };
 
   const handleSearchSubmit = (e) => {
@@ -150,7 +180,52 @@ export default function CarsList() {
                         </TableCell>
                         <TableCell>{car.year}</TableCell>
                         <TableCell>{formatCurrency(car.price)}</TableCell>
-                        <TableCell>{car.status}</TableCell>
+                        <TableCell>{getStatusBadge(car.status)}</TableCell>
+                        <TableCell>
+                          <Button
+                            className="p-0 h-9 w-9"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleFeatured(car)}
+                            disabled={updatingCar}
+                          >
+                            {car.featured ? (
+                              <div>
+                                <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
+                              </div>
+                            ) : (
+                              <div className="h-5 w-5 text-gray-400">
+                                <StarOff />
+                              </div>
+                            )}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-0 h-8 w-8"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="align-end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/cars/${car.id}`)}
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>Billing</DropdownMenuItem>
+                              <DropdownMenuItem>Team</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem>Subscription</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
