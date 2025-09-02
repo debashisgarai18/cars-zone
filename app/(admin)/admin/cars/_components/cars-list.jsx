@@ -92,7 +92,7 @@ export default function CarsList() {
       toast.success("Car upadated successfully");
       fetchCarsFunction(search);
     }
-  }, [updateResult, deleteResult, search]);
+  }, [updateResult, deleteResult]);
 
   // useEffect to handle the errors
   useEffect(() => {
