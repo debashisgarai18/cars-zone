@@ -255,11 +255,35 @@ export default function CarsList() {
                                 View
                               </DropdownMenuItem>
                               <DropdownMenuItem>Billing</DropdownMenuItem>
-                              <DropdownMenuItem>Set Available</DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusUpdate(car, "AVAILABLE")
+                                }
+                                disabled={
+                                  car.status === "AVAILABLE" || updatingCar
+                                }
+                                className="cursor-pointer"
+                              >
+                                Set Available
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleStatusUpdate(car, "UNAVAILABLE")
+                                }
+                                disabled={
+                                  car.status === "UNAVAILABLE" || updatingCar
+                                }
+                                className="cursor-pointer"
+                              >
                                 Set Unavailable
                               </DropdownMenuItem>
-                              <DropdownMenuItem>Mark as Sold</DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleStatusUpdate(car, "SOLD")}
+                                disabled={car.status === "SOLD" || updatingCar}
+                                className="cursor-pointer"
+                              >
+                                Mark as Sold
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-red-600 cursor-pointer"
@@ -281,7 +305,20 @@ export default function CarsList() {
               </Table>
             </div>
           ) : (
-            <div></div>
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <CarIcon className="h-12 w-12 text-gray-300 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-1">
+                No cars found
+              </h3>
+              <p className="text-gray-500 mb-4">
+                {search
+                  ? "No cars match your search criteria"
+                  : "Your inventory us empty. Add cars to get started."}
+              </p>
+              <Button onClick={() => router.push("/admin/cars/create")}>
+                Add your first car
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
