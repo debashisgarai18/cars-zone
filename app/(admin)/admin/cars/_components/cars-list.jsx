@@ -5,6 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -32,6 +40,7 @@ import {
   Search,
   Star,
   StarOff,
+  Trash,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -40,6 +49,8 @@ import { toast } from "sonner";
 
 export default function CarsList() {
   const [search, setSearch] = useState("");
+  const [carToDelete, setCarToDelete] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const router = useRouter();
 
@@ -59,7 +70,7 @@ export default function CarsList() {
   const {
     loading: deletingCar,
     fn: deleteCarsFunction,
-    data: dataResult,
+    data: deleteResult,
     error: deleteError,
   } = useFetch(deleteCar);
 
@@ -72,11 +83,23 @@ export default function CarsList() {
   } = useFetch(updateCarStatus);
 
   useEffect(() => {
+    if (deleteResult?.success) {
+      toast.success("Car deleted successfully");
+      fetchCarsFunction(search);
+    }
+
     if (updateResult?.success) {
       toast.success("Car upadated successfully");
       fetchCarsFunction(search);
     }
-  }, [updateResult, search]);
+  }, [updateResult, deleteResult, search]);
+
+  // useEffect to handle the errors
+  useEffect(() => {
+    if (carsError) toast.error("Failed to load the car");
+    if (deleteError) toast.error("Failed to delete the car");
+    if (updateError) toast.error("Failed to update the car");
+  }, [deleteError, updateError, carsError]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -107,9 +130,21 @@ export default function CarsList() {
     await updateCarStatusFunction(car.id, { featured: !car.featured });
   };
 
+  const handleStatusUpdate = async (car, newStatus) => {
+    await updateCarStatusFunction(car.id, { status: newStatus });
+  };
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    // api call to be added
+    fetchCarsFunction(search);
+  };
+
+  const handleDeleteCar = async () => {
+    if (!carToDelete) return;
+
+    await deleteCarsFunction(carToDelete.id);
+    setDeleteDialogOpen(false);
+    setCarToDelete(null);
   };
 
   return (
@@ -206,7 +241,7 @@ export default function CarsList() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="p-0 h-8 w-8"
+                                className="p-0 h-8 w-8 cursor-pointer"
                               >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
@@ -220,9 +255,22 @@ export default function CarsList() {
                                 View
                               </DropdownMenuItem>
                               <DropdownMenuItem>Billing</DropdownMenuItem>
-                              <DropdownMenuItem>Team</DropdownMenuItem>
+                              <DropdownMenuItem>Set Available</DropdownMenuItem>
+                              <DropdownMenuItem>
+                                Set Unavailable
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>Mark as Sold</DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem>Subscription</DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600 cursor-pointer"
+                                onClick={() => {
+                                  setCarToDelete(car);
+                                  setDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -237,6 +285,43 @@ export default function CarsList() {
           )}
         </CardContent>
       </Card>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {carToDelete?.make}{" "}
+              {carToDelete?.model} ({carToDelete?.year})? This action is
+              irreversible.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deletingCar}
+              className="cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteCar}
+              disabled={deletingCar}
+              className="cursor-pointer"
+            >
+              {deletingCar ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Car"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
