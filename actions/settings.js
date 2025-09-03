@@ -90,8 +90,8 @@ export async function getDealershipInfo() {
       success: true,
       data: {
         ...dealership,
-        createdAt: dealership.createdAt.toISOString(),
-        updatedAt: dealership.updatedAt.toISOString(),
+        createdAt: dealership.createdAt?.toISOString(),
+        updatedAt: dealership.updatedAt?.toISOString(),
       },
     };
   } catch (error) {
@@ -117,7 +117,7 @@ export async function saveWorkingHours(workingHours) {
       throw new Error("Dealership Info not found");
     }
 
-    await db.dealershipInfo.deleteMany({
+    await db.workingHour.deleteMany({
       where: {
         dealershipId: dealership.id,
       },
