@@ -21,7 +21,6 @@ import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -113,7 +112,7 @@ export default function SettingsForm() {
 
   const {
     loading: fetchUsers,
-    fn: fetchUserDetals,
+    fn: fetchUserDetails,
     data: usersData,
     error: usersError,
   } = useFetch(getUsers);
@@ -127,7 +126,7 @@ export default function SettingsForm() {
 
   useEffect(() => {
     fetchDealershipInfo();
-    fetchUserDetals();
+    fetchUserDetails();
   }, []);
 
   const handleWorkingHourChange = (index, field, value) => {
@@ -143,12 +142,32 @@ export default function SettingsForm() {
     await saveHours(workingHours);
   };
 
+  // handle errors
+  useEffect(() => {
+    if (settingsError) {
+      toast.error("Failed to load dealership settings");
+    }
+    if (saveError) {
+      toast.error(`Failed to save working hours: ${saveError.message}`);
+    }
+    if (usersError) {
+      toast.error("Failed to load the users");
+    }
+    if (updateRoleError) {
+      toast.error(`Failed to update the user role: ${updateRoleError.message}`);
+    }
+  }, [settingsError, saveError, usersError, updateRoleError]);
+
   useEffect(() => {
     if (saveResult?.success) {
       toast.success("Working hours saved successfully");
       fetchDealershipInfo();
     }
-  }, [saveResult]);
+    if (updateRoleResult?.success) {
+      toast.success("User role updated successfully");
+      fetchUserDetails();
+    }
+  }, [saveResult, updateRoleResult]);
 
   const filteredUsers = usersData?.success
     ? usersData.data.filter(
@@ -157,6 +176,30 @@ export default function SettingsForm() {
           user.email?.toLowerCase().includes(userSearch.toLowerCase())
       )
     : [];
+
+  const handleMakeAdmin = async (user) => {
+    if (
+      confirm(
+        `Are you sure you want to give admin access to ${
+          user.name || user.email
+        }? Admin users can manage all aspects of the dealership!`
+      )
+    ) {
+      await updateRole(user.id, "ADMIN");
+    }
+  };
+
+  const handleRemoveAdmin = async (user) => {
+    if (
+      confirm(
+        `Are you sure you want to remove admin access from ${
+          user.name || user.email
+        }? They will nolonger be able to access the admin dashboard!`
+      )
+    ) {
+      await updateRole(user.id, "USER");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -308,7 +351,7 @@ export default function SettingsForm() {
                     <TableBody>
                       {filteredUsers.map((user) => {
                         return (
-                          <TableRow>
+                          <TableRow key={user.id}>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden relative">
@@ -342,18 +385,20 @@ export default function SettingsForm() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="text-red-500"
+                                  className="text-red-500 cursor-pointer"
                                   onClick={() => handleRemoveAdmin(user)}
-                                  disabled={updateRole}
+                                  disabled={updatingRole}
                                 >
                                   <UserX className="h-4 w-4 mr-2" />
+                                  Remove Admin
                                 </Button>
                               ) : (
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleMakeAdmin(user)}
-                                  disabled={updateRole}
+                                  disabled={updatingRole}
+                                  className="cursor-pointer"
                                 >
                                   <Shield className="h-4 w-4 mr-2" />
                                   Make Admin
