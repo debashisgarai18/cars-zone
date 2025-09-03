@@ -6,6 +6,7 @@ import {
   saveWorkingHours,
   updateUserRole,
 } from "@/actions/settings";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,9 +18,26 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useFetch from "@/hooks/use-fetch";
-import { Clock, Loader2, Save, Shield } from "lucide-react";
+import {
+  Clock,
+  Loader2,
+  Save,
+  Search,
+  Shield,
+  Users,
+  UserX,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -132,6 +150,14 @@ export default function SettingsForm() {
     }
   }, [saveResult]);
 
+  const filteredUsers = usersData?.success
+    ? usersData.data.filter(
+        (user) =>
+          user.name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+          user.email?.toLowerCase().includes(userSearch.toLowerCase())
+      )
+    : [];
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="hours">
@@ -226,7 +252,11 @@ export default function SettingsForm() {
                 })}
               </div>
               <div className="mt-6 flex justify-end">
-                <Button onClick={handleSaveHours} disabled={savingHours}>
+                <Button
+                  onClick={handleSaveHours}
+                  className="cursor-pointer"
+                  disabled={savingHours}
+                >
                   {savingHours ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -244,7 +274,113 @@ export default function SettingsForm() {
           </Card>
         </TabsContent>
         <TabsContent value="admins" className="space-y-6 mt-6">
-          Change your password here.
+          <Card>
+            <CardHeader>
+              <CardTitle>Admin Users</CardTitle>
+              <CardDescription>Manage users for admin access</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6 relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  type="search"
+                  placeholder="Search users..."
+                  className="pl-9 w-full"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                />
+              </div>
+              {fetchUsers ? (
+                <div className="py-12 flex justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              ) : usersData?.success && filteredUsers.length > 0 ? (
+                <div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredUsers.map((user) => {
+                        return (
+                          <TableRow>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden relative">
+                                  {user.imageUrl ? (
+                                    <img
+                                      src={user.imageUrl}
+                                      alt={user.name || "User"}
+                                      className="w-full h-full obejct-cover"
+                                    />
+                                  ) : (
+                                    <Users className="h-4 w-4 text-gray-500" />
+                                  )}
+                                </div>
+                                <span>{user.name || "Anonymous User"}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              <Badge
+                                className={
+                                  user.role === "ADMIN"
+                                    ? "bg-green-800"
+                                    : "bg-gray-800"
+                                }
+                              >
+                                {user.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {user.role === "ADMIN" ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-500"
+                                  onClick={() => handleRemoveAdmin(user)}
+                                  disabled={updateRole}
+                                >
+                                  <UserX className="h-4 w-4 mr-2" />
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleMakeAdmin(user)}
+                                  disabled={updateRole}
+                                >
+                                  <Shield className="h-4 w-4 mr-2" />
+                                  Make Admin
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No users found
+                  </h3>
+                  <p className="text-gray-500">
+                    {userSearch
+                      ? "No users match your search criteria"
+                      : "There are no users registered yet"}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
