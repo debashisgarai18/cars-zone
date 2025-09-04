@@ -33,7 +33,7 @@ export const CarCard = ({ car }) => {
           </div>
         )}
         <Button
-          className={`absolute top-2 right-2 bg-white/90 rounded-full p-1.5 ${
+          className={`absolute top-2 cursor-pointer right-2 bg-white/90 rounded-full p-1.5 ${
             saved
               ? "text-red-500 hover:text-red-600"
               : "text-gray-500 hover:text-gray-900"
@@ -51,7 +51,7 @@ export const CarCard = ({ car }) => {
             {car.make} {car.model}{" "}
           </h3>
           <span className="text-xl text-blue-600 font-bold">
-            ${car.price.toLocaleString()}
+            Rs. {car.price.toLocaleString()}
           </span>
         </div>
         <div className="text-gray-600 mb-2 flex items-center">
@@ -74,7 +74,7 @@ export const CarCard = ({ car }) => {
         </div>
         <div className="flex justify-between">
           <Button
-            className="flex-1"
+            className="flex-1 cursor-pointer"
             onClick={() => router.push(`/cars/${car.id}`)}
           >
             View Car
