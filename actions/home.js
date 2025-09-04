@@ -2,15 +2,16 @@
 
 import aj from "@/lib/arcjet";
 import { serializedCarData } from "@/lib/helper";
+import { db } from "@/lib/prisma";
 import { request } from "@arcjet/next";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function getFeaturedCars(limit = 3) {
   try {
-    const cars = await db.cars.findMany({
+    const cars = await db.car.findMany({
       where: {
         featured: true,
-        status: "AVAIALABLE",
+        status: "AVAILABLE",
       },
       take: limit,
       orderBy: { createdAt: "desc" },
