@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import useFetch from "@/hooks/use-fetch";
+import { processImageSearch } from "@/actions/home";
 
 export const HomeSearch = () => {
   const [searchText, setSearchText] = useState("");
@@ -16,6 +18,13 @@ export const HomeSearch = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   const router = useRouter();
+
+  const {
+    loading: isProcessing,
+    fn: processImageFunction,
+    data: processResult,
+    error: processError,
+  } = useFetch(processImageSearch);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -33,7 +42,30 @@ export const HomeSearch = () => {
       return;
     }
     // AI image generation logic
+    await processImageFunction(searchImage);
   };
+
+  useEffect(() => {
+    if (processError) {
+      toast.error(
+        `Failed to analyse image: ${processError.message || "Unknown error"}`
+      );
+    }
+  }, [processError]);
+
+  useEffect(() => {
+    if (processResult?.success) {
+      const params = new URLSearchParams();
+
+      if (processResult.data.make) params.set("make", processResult.data.make);
+      if (processResult.data.bodyType)
+        params.set("bodyType", processResult.data.bodyType);
+      if (processResult.data.color)
+        params.set("color", processResult.data.color);
+
+      router.push(`/cars?${params.toString()}`);
+    }
+  }, [processResult]);
 
   // use of react-dropzone
   const onDrop = (acceptedFiles) => {
@@ -94,7 +126,10 @@ export const HomeSearch = () => {
               }}
             />
           </div>
-          <Button type="submit" className="absolute right-2 rounded-full">
+          <Button
+            type="submit"
+            className="absolute right-2 cursor-pointer rounded-full"
+          >
             Search
           </Button>
         </div>
@@ -112,6 +147,7 @@ export const HomeSearch = () => {
                   />
                   <Button
                     variant="outline"
+                    className="cursor-pointer"
                     onClick={() => {
                       setSearchImage(null);
                       setImagePreview("");
@@ -143,11 +179,15 @@ export const HomeSearch = () => {
             </div>
             {imagePreview && (
               <Button
-                className="w-full mt-2"
+                className="w-full mt-2 cursor-pointer"
                 type="submit"
-                disabled={isUploading}
+                disabled={isUploading || isProcessing}
               >
-                {isUploading ? "Uploading..." : "Search with this Image"}
+                {isUploading
+                  ? "Uploading..."
+                  : isProcessing
+                  ? "Analyzing Image..."
+                  : "Search with this Image"}
               </Button>
             )}
           </form>
