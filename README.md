@@ -9,4 +9,4 @@
 - Tailwind
 - Clerk
 - Supabase
-- Arcjet
+- Arcjet - will be used for Rate Limiting
