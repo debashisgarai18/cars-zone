@@ -78,6 +78,7 @@ export default function CarFilters({ filters }) {
     bodyType,
     fuelType,
     transmission,
+    priceRange,
     priceRangeMin: filters.priceRange.min,
     priceRangeMax: filters.priceRange.max,
   };
@@ -236,7 +237,7 @@ export default function CarFilters({ filters }) {
       </Select>
       <div className="hidden lg:block sticky top-24">
         <div className="border rounded-lg overflow-hidden bg-white">
-          <div>
+          <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
             <h3 className="font-medium flex items-center">
               <Sliders className="mr-2 h-4 w-4" />
               Filters
@@ -253,7 +254,7 @@ export default function CarFilters({ filters }) {
               </Button>
             )}
           </div>
-          <div className="py-6">
+          <div className="p-4">
             <CarFilterControls
               filters={filters}
               currentFilters={currentFilters}
