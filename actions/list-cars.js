@@ -59,7 +59,7 @@ export async function getCarFilters() {
   }
 }
 
-export async function getCars({
+export async function getCarList({
   search = "",
   make = "",
   bodyType = "",
