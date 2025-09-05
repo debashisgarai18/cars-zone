@@ -1,19 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Card, CardContent } from "./ui/card";
-import { CarIcon, Heart } from "lucide-react";
+import { CarIcon, Heart, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { useRouter } from "next/navigation";
+import useFetch from "@/hooks/use-fetch";
+import { toggleSavedCar } from "@/actions/list-cars";
+import { useAuth } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 export const CarCard = ({ car }) => {
   const [saved, setSaved] = useState(car.wishlisted);
 
   const router = useRouter();
+  const { isSignedIn } = useAuth();
 
-  const handleToggleSave = async (e) => {};
+  const {
+    loading: isToggling,
+    fn: toggleSavedCarFunction,
+    data: toggleResult,
+    error: toggleError,
+  } = useFetch(toggleSavedCar);
+
+  useEffect(() => {
+    if (toggleResult?.success && toggleResult.saved !== saved) {
+      setSaved(toggleResult.saved);
+      toast.success(toggleResult.message);
+    }
+  }, [toggleResult, saved]);
+
+  useEffect(() => {
+    if (toggleError) {
+      toast.error("Failed to update favorites");
+    }
+  }, [toggleError]);
+
+  const handleToggleSave = async (e) => {
+    e.preventDefault();
+
+    if (!isSignedIn) {
+      toast.error("Please signin to save cars");
+      router.push("/sign-in");
+      return;
+    }
+
+    if (isToggling) return;
+
+    await toggleSavedCarFunction(car.id);
+  };
 
   return (
     <Card className="overflow-hidden group transition hover:shadow-lg py-0">
@@ -42,7 +79,11 @@ export const CarCard = ({ car }) => {
           size="icon"
           onClick={handleToggleSave}
         >
-          <Heart className={`${saved ? "fill-current" : ""}`} size={20} />
+          {isToggling ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Heart className={`${saved ? "fill-current" : ""}`} size={20} />
+          )}
         </Button>
       </div>
       <CardContent className="p-4">

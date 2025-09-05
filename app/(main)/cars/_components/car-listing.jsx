@@ -110,6 +110,7 @@ export default function CarListing() {
           <CarCard key={car.id} car={car} />
         ))}
       </div>
+      {/* todo : implement pagination here */}
     </div>
   );
 }
