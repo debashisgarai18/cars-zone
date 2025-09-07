@@ -1,4 +1,4 @@
-"use server"
+"use server";
 
 import { serializedCarData } from "@/lib/helper";
 import { db } from "@/lib/prisma";
@@ -226,5 +226,50 @@ export async function toggleSavedCar(carId) {
     };
   } catch (error) {
     throw new Error(`Error toggling saved cars : ${error.message}`);
+  }
+}
+
+export async function gteSavedCars() {
+  try {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const user = await db.user.findUnique({
+      where: {
+        clerkUserId: userId,
+      },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        error: "User not found",
+      };
+    }
+
+    const savedCars = await db.userSavedCar.findMany({
+      where: {
+        userId: user.id,
+      },
+      include: {
+        car: true,
+      },
+      orderBy: {
+        savedAt: "desc",
+      },
+    });
+
+    const cars = savedCars.map((save) => serializedCarData(save.car));
+
+    return {
+      success: true,
+      data: cars,
+    };
+  } catch (error) {
+    console.error(`Error fetching cars : ${error}`);
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 }
