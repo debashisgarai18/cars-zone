@@ -4,7 +4,6 @@ import { serializedCarData } from "@/lib/helper";
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import { id } from "zod/v4/locales";
 
 export async function getCarFilters() {
   try {
@@ -331,7 +330,7 @@ export async function getCarById(carId) {
       userTestDrive = {
         id: existingTestDrive.id,
         status: existingTestDrive.status,
-        bookingDate: existingTestDrive.bookingDate.toISOString(),
+        bookingDate: existingTestDrive.bookingDate?.toISOString(),
       };
     }
 
@@ -350,13 +349,13 @@ export async function getCarById(carId) {
           dealership: dealership
             ? {
                 ...dealership,
-                createdAt: dealership.createdAt.toISOString(),
-                updatedAt: dealership.updatedAt.toISOString(),
+                createdAt: dealership.createdAt?.toISOString(),
+                updatedAt: dealership.updatedAt?.toISOString(),
                 workingHours: dealership.workingHours.map((wh) => {
                   return {
                     ...wh,
-                    createdAt: wh.createdAt.toISOString(),
-                    updatedAt: wh.updatedAt.toISOString(),
+                    createdAt: wh.createdAt?.toISOString(),
+                    updatedAt: wh.updatedAt?.toISOString(),
                   };
                 }),
               }
