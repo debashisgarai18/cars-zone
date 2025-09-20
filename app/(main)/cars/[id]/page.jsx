@@ -1,4 +1,6 @@
 import { getCarById } from "@/actions/list-cars";
+import { notFound } from "next/navigation";
+import CarDetails from "./_components/car-details";
 
 export async function generateMetaData({ params }) {
   const { id } = await params;
@@ -26,5 +28,13 @@ export default async function CarPage({ params }) {
   const { id } = await params;
   const result = await getCarById(id);
 
-  return <div>CarPage : {id}</div>;
+  if (!result.success) {
+    notFound();
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <CarDetails car={result.data} testDriveInfo={result.data.testDriveInfo} />
+    </div>
+  );
 }
