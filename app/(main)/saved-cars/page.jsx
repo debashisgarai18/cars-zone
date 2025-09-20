@@ -1,7 +1,7 @@
-import { gteSavedCars } from "@/actions/list-cars";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import SavedCarsList from "./_components/saved-cars-list";
+import { getSavedCars } from "@/actions/list-cars";
 
 export default async function SavedCarPage() {
   const { userId } = await auth();
@@ -9,7 +9,7 @@ export default async function SavedCarPage() {
     redirect("/sign-in?redirect=/saved-cars");
   }
 
-  const savedCarsResult = await gteSavedCars();
+  const savedCarsResult = await getSavedCars();
 
   return (
     <div className="container mx-auto px-4 py-12">

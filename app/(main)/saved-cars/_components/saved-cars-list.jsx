@@ -1,5 +1,6 @@
 "use client";
 
+import { CarCard } from "@/components/car-card";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import Link from "next/link";
@@ -23,5 +24,11 @@ export default function SavedCarsList({ initialData }) {
     );
   }
 
-  return <div>Saved Cars List</div>;
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {initialData?.data?.map((car) => (
+        <CarCard key={car.id} car={{ ...car, wishlisted: true }} />
+      ))}
+    </div>
+  );
 }
