@@ -1,8 +1,17 @@
 "use client";
 
+import { bookTestDrive } from "@/actions/test-drive";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -15,14 +24,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import useFetch from "@/hooks/use-fetch";
 import { formatCurrency } from "@/lib/helper";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
-import { CalendarIcon, Car } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { CalendarIcon, Car, CheckCircle2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const testDriveSchema = z.object({
@@ -39,7 +51,7 @@ export default function TestDriveBookingForm({ car, testDriveInfo }) {
   const router = useRouter();
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [bookingDetails, seBookingDetails] = useState(null);
+  const [bookingDetails, setBookingDetails] = useState(null);
 
   const {
     control,
@@ -49,7 +61,7 @@ export default function TestDriveBookingForm({ car, testDriveInfo }) {
     reset,
     formState: { errors, isValid },
   } = useForm({
-    resolver: zodResolver,
+    resolver: zodResolver(testDriveSchema),
     defaultValues: {
       date: undefined,
       timeSlot: undefined,
@@ -57,12 +69,68 @@ export default function TestDriveBookingForm({ car, testDriveInfo }) {
     },
   });
 
+  const {
+    loading: bookingInProgress,
+    fn: bookingTestDriveFunction,
+    data: bookingResult,
+    error: bookingError,
+  } = useFetch(bookTestDrive);
+
   const dealership = testDriveInfo?.dealership;
   const existingBookings = testDriveInfo?.existingBookings || [];
 
   const selectedDate = watch("date");
 
-  const onSubmit = async (data) => {};
+  useEffect(() => {
+    if (bookingError) {
+      toast.error(
+        bookingError.message || "Failed to book test drive. Please try again."
+      );
+    }
+  }, [bookingError]);
+
+  useEffect(() => {
+    if (bookingResult?.success) {
+      setBookingDetails({
+        date: format(bookingResult?.data?.bookingDate, "EEEE, MMMM d, yyyy"),
+        timeSlot: `${format(
+          parseISO(`2022-01-01T${bookingResult?.data?.startTime}`),
+          "h:mm a"
+        )} - ${format(
+          parseISO(`2022-01-01T${bookingResult?.data?.endTime}`),
+          "h:mm a"
+        )}`,
+        notes: bookingResult?.data?.notes,
+      });
+      setShowConfirmation(true);
+
+      reset();
+    }
+  }, [bookingResult]);
+
+  const onSubmit = async (data) => {
+    const selectedSlot = availableTimeSlots.find(
+      (slot) => slot.id === data.timeSlot
+    );
+
+    if (!selectedSlot) {
+      toast.error("Selected time slot is not available");
+      return;
+    }
+
+    await bookingTestDriveFunction({
+      carId: car.id,
+      bookingDate: format(data.date, "yyyy-MM-dd"),
+      startTime: selectedSlot.startTime,
+      endTime: selectedSlot.endTime,
+      notes: data.notes || "",
+    });
+  };
+
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+    router.push(`/cars/${car.id}`);
+  };
 
   // function to disable previous dates in the calendar
   const isDayDisabled = (day) => {
@@ -102,7 +170,7 @@ export default function TestDriveBookingForm({ car, testDriveInfo }) {
       const isBooked = existingBookings.some((booking) => {
         const bookingDate = booking.date;
         return (
-          bookingDate === format(selectedDate, "yyyy-mm-dd") &&
+          bookingDate === format(selectedDate, "yyyy-MM-dd") &&
           (booking.startTime === startTime || booking.endTime === endTime)
         );
       });
@@ -119,7 +187,7 @@ export default function TestDriveBookingForm({ car, testDriveInfo }) {
 
     setAvailableTimeSlots(timeSlots);
     setValue("timeSlot", "");
-  }, [selectedDate, dealership, existingBookings]);
+  }, [selectedDate]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -260,12 +328,22 @@ export default function TestDriveBookingForm({ car, testDriveInfo }) {
                           }
                         >
                           <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Theme" />
+                            <SelectValue
+                              placeholder={
+                                !selectedDate
+                                  ? "Please select a date first"
+                                  : availableTimeSlots.length === 0
+                                  ? "No available slots on this date"
+                                  : "Select a time slot"
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="light">Light</SelectItem>
-                            <SelectItem value="dark">Dark</SelectItem>
-                            <SelectItem value="system">System</SelectItem>
+                            {availableTimeSlots.map((slot) => (
+                              <SelectItem key={slot.id} value={slot.id}>
+                                {slot.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         {errors.date && (
@@ -278,10 +356,105 @@ export default function TestDriveBookingForm({ car, testDriveInfo }) {
                   }}
                 />
               </div>
+              <div className="space-y-2">
+                <label htmlFor="block text-sm font-medium">
+                  Additional Notes (Optional)
+                </label>
+                <Controller
+                  name="notes"
+                  control={control}
+                  render={({ field }) => {
+                    return (
+                      <Textarea
+                        {...field}
+                        placeholder="Any specific question or requests for your test drive?"
+                        className="min-h-24"
+                      />
+                    );
+                  }}
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full cursor-pointer"
+                disabled={bookingInProgress}
+              >
+                {bookingInProgress ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Booking your test drive...
+                  </>
+                ) : (
+                  "Book Test Drive"
+                )}
+              </Button>
             </form>
+            <div className="mt-8 bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium mb-2">What to expect</h3>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-start">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
+                  Bring your driver's license for verification
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
+                  Test drives typically last 30-60 minutes
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
+                  A dealership representative will accompany you
+                </li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
       </div>
+      <Dialog>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Are you absolutely sure?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete your
+              account and remove your data from our servers.
+            </DialogDescription>
+          </DialogHeader>
+          {bookingDetails && (
+            <div className="py-4">
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="font-medium">Car:</span>
+                  <span>
+                    {car.year} {car.make} {car.model}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Date:</span>
+                  <span>{bookingDetails.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Time Slot:</span>
+                  <span>{bookingDetails.timeSlot}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Delaership:</span>
+                  <span>{dealership?.name || "CarZone"}</span>
+                </div>
+              </div>
+              <div className="mt-4 bg-blue-50 p-3 rounded text-sm text-blue-700">
+                Please arrive 20 minutes early with your driving license.
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end">
+            <Button
+              className="cursor-pointer"
+              onClick={handleCloseConfirmation}
+            >
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
